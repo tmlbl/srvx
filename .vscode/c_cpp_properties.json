@@ -9,15 +9,18 @@
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64",
-            "compileCommands": "${workspaceFolder}/libfuse/build/compile_commands.json"
+            "intelliSenseMode": "clang-x64"
         },
         {
             "name": "Mac",
             "includePath": [
                 "/usr/local/include/osxfuse"
-            ]
+            ],
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
         }
     ],
-    "version": 4
+    "version": 3
 }
