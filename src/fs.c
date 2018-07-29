@@ -41,10 +41,34 @@ srvx_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     return 0;
 }
 
+static int
+srvx_flush(const char *path, struct fuse_file_info *info)
+{
+    return 0;
+}
+
+static int
+srvx_getxattr(const char *path, const char *one, char *two, size_t size)
+{
+    printf("Getxaddr string params: %s %s %s\n", path, one, two);
+    return 0;
+}
+
+static int 
+srvx_write(const char *path, const char *data, size_t size, off_t offset,
+		struct fuse_file_info *info)
+{
+    printf("Writing to path %s data %s\n", path, data);
+    return size;
+}
+
 static struct fuse_operations srvx_filesystem_operations = {
-    .getattr = srvx_getattr,
-    .access  = srvx_access,
-    .readdir = srvx_readdir,
+    .getattr  = srvx_getattr,
+    .access   = srvx_access,
+    .readdir  = srvx_readdir,
+    .flush    = srvx_flush,
+    .getxattr = srvx_getxattr,
+    .write    = srvx_write,
 };
 
 int
