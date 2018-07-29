@@ -11,6 +11,12 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64",
             "compileCommands": "${workspaceFolder}/libfuse/build/compile_commands.json"
+        },
+        {
+            "name": "Mac",
+            "includePath": [
+                "/usr/local/include/osxfuse"
+            ]
         }
     ],
     "version": 4
