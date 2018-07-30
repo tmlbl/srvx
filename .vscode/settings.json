@@ -1,5 +1,12 @@
 {
     "files.associations": {
         "fuse.h": "c"
+    },
+    "[c]": {
+        "editor.tabSize": 8,
+        "editor.insertSpaces": false,
+        "editor.rulers": [
+            80
+        ]
     }
 }

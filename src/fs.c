@@ -5,6 +5,8 @@
 #define FUSE_USE_VERSION 26
 #include <fuse.h>
 
+#include "messages.h"
+
 static int
 srvx_getattr(const char *path, struct stat *stbuf)
 {
@@ -75,5 +77,13 @@ int
 main(int argc, char **argv)
 {
     printf("Starting the program\n");
-    return fuse_main(argc, argv, &srvx_filesystem_operations, NULL);
+    srvx_mq_client mqclient;
+    srvx_mq_client_connect(&mqclient);
+
+    printf("Sending message to server\n");
+    srvx_mq_client_send(&mqclient, "howdy");
+
+    srvx_mq_client_destroy(&mqclient);
+    // return fuse_main(argc, argv, &srvx_filesystem_operations, NULL);
+    return 0;
 }
