@@ -2,15 +2,26 @@
 
 int main(void)
 {
-	// Create and bind server socket
-	zsock_t *server = zsock_new(ZMQ_REP);
-	int ret = zsock_bind(server, "tcp://*:9000");
-	if (ret != 0)
-		printf("Serving on port %d\n", ret);
+	void *context = zmq_ctx_new();
+	void *responder = zmq_socket(context, ZMQ_REP);
+	int rc = zmq_bind(responder, "tcp://*:5555");
+	if (rc != 0)
+		return rc;
 
-	char *message = zstr_recv(server);
-	printf("Message received! %s\n", message);
+	// Listen for messages
+	while (1) {
+		char buf[256];
+		int size = zmq_recv(responder, buf, 255, 0);
+		printf("received size %d\n", size);
+		if (size == -1)
+			continue;
+		if (size > 255)
+			size = 255;
+		buf[size] = 0;
+		char *str = strdup(buf);
+		printf("Received a message: %s\n", str);
+		zmq_send(responder, "OK", 2, 0);
+	}
 
-	zsock_destroy(&server);
 	return 0;
 }
