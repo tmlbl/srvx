@@ -13,7 +13,8 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 
 int srvx_mq_client_destroy(srvx_mq_client *client)
 {
-	// zsock_destroy(&(client->push_sock));
+	zmq_close(client->requester);
+	zmq_ctx_destroy(client->context);
 	return 0;
 }
 
