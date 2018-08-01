@@ -2,14 +2,27 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #define FUSE_USE_VERSION 26
 #include <fuse.h>
 
-#include "messages.h"
+#include "mq_client.h"
 
 static const char SRVX_MSG_TYPE_REQ[] = "/req";
+static const char SRVX_MSG_TYPE_PUB[] = "/pub";
 
 srvx_mq_client mqclient;
+
+const char *
+srvx_msg_type(const char *path)
+{
+    if (strncmp(SRVX_MSG_TYPE_REQ, path, 4)) {
+        return SRVX_MSG_TYPE_REQ;
+    } else if (strncmp(SRVX_MSG_TYPE_PUB, path, 4)) {
+        return SRVX_MSG_TYPE_PUB;
+    }
+    return NULL;
+}
 
 // Tells us whether a given path matches our route key schema.
 // The root "/" is always valid
@@ -18,7 +31,7 @@ srvx_is_valid_path(const char *path)
 {
     if (strcmp("/", path) == 0) {
         return 1;
-    } else if (strcmp(SRVX_MSG_TYPE_REQ, path) == 0) {
+    } else if (srvx_msg_type(path) != NULL) {
         return 1;
     }
     return 0;
@@ -130,8 +143,61 @@ static struct fuse_operations srvx_filesystem_operations = {
 int
 main(int argc, char **argv)
 {
-    printf("Starting the program\n");
-    srvx_mq_client_connect(&mqclient);
-    fuse_main(argc, argv, &srvx_filesystem_operations, NULL);
-    srvx_mq_client_destroy(&mqclient);
+    // Resolve arguments to full paths so we can run in a different directory
+    // context
+    char *real_args[argc];
+    for (int i = 1; i < argc; i++) {
+        char *arg = argv[i];
+        char actual_path[PATH_MAX + 1];
+        realpath(arg, actual_path);
+        // Check if full path is actually a file, if not, try to resolve within
+        // executable PATH
+        if (access(actual_path, F_OK) == -1) {
+            // Use the output of the which command to find it
+            char cmd[256];
+            sprintf(cmd, "which %s", arg);
+            FILE *which = popen(cmd, "r");
+            char which_out[PATH_MAX];
+            fgets(which_out, PATH_MAX, which);
+            // Trim newline
+            int out_len = strlen(which_out);
+            for (int j = 0; j < out_len; j++) {
+                if (which_out[j] == '\n') {
+                    which_out[j] = '\0';
+                }
+            }
+            real_args[i - 1] = which_out;
+        } else {
+            real_args[i - 1] = actual_path;
+        }
+    }
+
+    // Build a command string out of the args to be passed to popen
+    int cmd_len = 0;
+    for (int i = 0; i < argc - 1; i++) {
+        cmd_len++;
+        cmd_len += strlen(real_args[i]);
+    }
+    char cmd_str[cmd_len+1];
+    cmd_str[0] = 0;
+    for (int i = 0; i < argc - 1; i++) {
+        if (i > 0) {
+            strcat(cmd_str, " ");
+        }
+        strcat(cmd_str, real_args[i]);
+    }
+    char *cmd_template = "cd /tmp/srvxfs && %s";
+    int cmd_template_len = strlen(cmd_template);
+    char full_cmd[cmd_template_len + cmd_len];
+    sprintf(full_cmd, cmd_template, cmd_str);
+
+    // Canned arguments to fuse_main
+    char *fuse_args[3];
+    fuse_args[0] = "srvx";
+    fuse_args[1] = "-d";
+    fuse_args[2] = "/tmp/abcd";
+
+    // srvx_mq_client_connect(&mqclient);
+    // fuse_main(3, fuse_args, &srvx_filesystem_operations, NULL);
+    // srvx_mq_client_destroy(&mqclient);
 }

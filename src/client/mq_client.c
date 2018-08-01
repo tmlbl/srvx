@@ -1,4 +1,4 @@
-#include "messages.h"
+#include "mq_client.h"
 
 int srvx_mq_client_connect(srvx_mq_client *client)
 {
@@ -30,4 +30,9 @@ char* srvx_mq_client_send(srvx_mq_client *client, char *msg)
 		size = 255;
 	buf[size] = 0;
 	return strdup(buf);
+}
+
+void srvx_mq_client_publish(srvx_mq_client *client, char *key, char *data)
+{
+	
 }
