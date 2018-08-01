@@ -6,11 +6,15 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 	void *requester = zmq_socket(context, ZMQ_REQ);
 	zmq_connect(requester, "tcp://127.0.0.1:5555");
 
+	void *publisher = zmq_socket(context, ZMQ_PUSH);
+	zmq_connect(publisher, "tcp://127.0.0.1:5557");
+
 	void *subscriber = zmq_socket(context, ZMQ_SUB);
 	zmq_connect(subscriber, "tcp://127.0.0.1:5558");
 
 	client->context = context;
 	client->requester = requester;
+	client->publisher = publisher;
 	client->subscriber = subscriber;
 	return 0;
 }
@@ -36,9 +40,12 @@ char* srvx_mq_client_send(srvx_mq_client *client, char *msg)
 	return strdup(buf);
 }
 
-void srvx_mq_client_publish(srvx_mq_client *client, char *key, char *data)
+void srvx_mq_client_publish(srvx_mq_client *client, char *path, char *data)
 {
-
+	printf("Client is publishing at %s\n", path);
+	char payload[strlen(path) + strlen(data) + 1];
+	sprintf(payload, "%s %s", path, data);
+	s_send(client->publisher, payload);
 }
 
 // Pull a single message from a subscriber socket

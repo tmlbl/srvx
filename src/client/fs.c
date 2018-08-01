@@ -66,8 +66,11 @@ srvx_write(const char *path, const char *data, size_t size, off_t offset,
 		struct fuse_file_info *info)
 {
     printf("Writing to path %s data %s\n", path, data);
-    char *msg = strdup(data);
-    srvx_mq_client_send(&mqclient, msg);
+    switch (srvx_msg_type(path)) {
+    case SRVX_MSG_TYPE_PUB:
+        srvx_mq_client_publish(&mqclient, strdup(path), strdup(data));
+        break;
+    }
     return size;
 }
 
@@ -108,7 +111,7 @@ srvx_read(const char *path, char *buf, size_t size, off_t offset,
     char *msg;
 
     switch (srvx_msg_type(path)) {
-    case SRVX_MSG_TYPE_SUB:
+    case SRVX_MSG_TYPE_PUB:
         msg = srvx_mq_client_subscribe(&mqclient, path);
         printf("Message received in read: %s\n", msg);
         break;
@@ -143,6 +146,20 @@ static struct fuse_operations srvx_filesystem_operations = {
     .read     = srvx_read,
 };
 
+static char *rand_string(char *str, size_t size)
+{
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX";
+    if (size) {
+        --size;
+        for (size_t n = 0; n < size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+    return str;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -175,8 +192,13 @@ main(int argc, char **argv)
         }
     }
 
-    // TODO: Random name for temp dir
-    char *rundir = "/tmp/srvxfs";
+    // Random name for temp dir
+    srand(time(NULL));
+    char *rundir_base = "/tmp/srvxfs-%s";
+    char rundir[strlen(rundir_base) + 8];
+    char rundir_salt[10];
+    rand_string(rundir_salt, 10);
+    sprintf(rundir, rundir_base, rundir_salt);
 
     // Build a command string out of the args to be passed to popen
     int cmd_len = 0;
@@ -199,7 +221,10 @@ main(int argc, char **argv)
 
     // Canned arguments to fuse_main
     char *fuse_args[3];
-    fuse_args[0] = "srvx";
+    // If we pass the same executable name to argument 0, fuse will give errors
+    // if more than one instance of the program is active. However, it doesn't
+    // seem to matter what we pass in here, as long as it's different...
+    fuse_args[0] = rundir_salt;
     fuse_args[1] = "-f";
     fuse_args[2] = strdup(rundir);
 

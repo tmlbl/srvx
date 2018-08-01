@@ -40,9 +40,6 @@
 #   define random rand
 #endif
 
-//  Provide random number from 0..(num-1)
-#define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
-
 //  Receive 0MQ string from socket and convert into C string
 //  Caller must free returned string. Returns NULL if the context
 //  is being terminated.
@@ -126,7 +123,7 @@ s_dump (void *socket)
 //  Set simple random printable identity on socket
 //  Caution:
 //    DO NOT call this version of s_set_id from multiple threads on MS Windows
-//    since s_set_id will call rand() on MS Windows. rand(), however, is not 
+//    since s_set_id will call rand() on MS Windows. rand(), however, is not
 //    reentrant or thread-safe. See issue #521.
 static void
 s_set_id (void *socket)

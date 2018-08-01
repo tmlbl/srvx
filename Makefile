@@ -2,7 +2,7 @@ CC := clang
 MESON_VERSION := 0.47.1
 UNAME_S := $(shell uname -s)
 
-CFLAGS := -Wall -D_FILE_OFFSET_BITS=64 -I `pwd`/src/common
+CFLAGS := -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I `pwd`/src/common
 LDFLAGS := -pthread -lfuse -lczmq -lzmq
 
 ifeq ($(UNAME_S),Darwin)
