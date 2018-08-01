@@ -119,6 +119,7 @@ srvx_read(const char *path, char *buf, size_t size, off_t offset,
         return -1;
     }
 
+    msg = srvx_chop_path(msg);
     size_t len;
 	len = strlen(msg);
 	if (offset < len) {

@@ -28,4 +28,16 @@ static int srvx_msg_type(const char *path)
     return SRVX_MSG_TYPE_INVALID;
 }
 
+// Remove the path segment from a message string
+char* srvx_chop_path(char *msg)
+{
+	int msg_len = strlen(msg);
+	for (int i = 0; i < msg_len; i++) {
+		if (msg[i] == ' ') {
+			return msg + i + 1;
+		}
+	}
+	return msg;
+}
+
 #endif // SRVX_PATH_H
