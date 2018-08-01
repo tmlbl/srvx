@@ -172,6 +172,9 @@ main(int argc, char **argv)
         }
     }
 
+    // TODO: Random name for temp dir
+    char *rundir = "/tmp/srvxfs";
+
     // Build a command string out of the args to be passed to popen
     int cmd_len = 0;
     for (int i = 0; i < argc - 1; i++) {
@@ -186,18 +189,29 @@ main(int argc, char **argv)
         }
         strcat(cmd_str, real_args[i]);
     }
-    char *cmd_template = "cd /tmp/srvxfs && %s";
-    int cmd_template_len = strlen(cmd_template);
+    char *cmd_template = "cd %s && %s";
+    int cmd_template_len = strlen(cmd_template) + strlen(rundir);
     char full_cmd[cmd_template_len + cmd_len];
-    sprintf(full_cmd, cmd_template, cmd_str);
+    sprintf(full_cmd, cmd_template, rundir, cmd_str);
 
     // Canned arguments to fuse_main
     char *fuse_args[3];
     fuse_args[0] = "srvx";
     fuse_args[1] = "-d";
-    fuse_args[2] = "/tmp/abcd";
+    fuse_args[2] = strdup(rundir);
 
-    // srvx_mq_client_connect(&mqclient);
-    // fuse_main(3, fuse_args, &srvx_filesystem_operations, NULL);
-    // srvx_mq_client_destroy(&mqclient);
+    // Create the run directory
+    mkdir(rundir, 0755);
+
+    int pid = fork();
+
+    if (pid == 0) {
+        sleep(1);
+        printf("Running command %s\n", full_cmd);
+        FILE *cmd_out = popen(full_cmd, "r");
+    } else {
+        srvx_mq_client_connect(&mqclient);
+        fuse_main(3, fuse_args, &srvx_filesystem_operations, NULL);
+        srvx_mq_client_destroy(&mqclient);
+    }
 }
