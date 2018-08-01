@@ -10,28 +10,17 @@
 
 static const char SRVX_MSG_TYPE_REQ[] = "/req";
 static const char SRVX_MSG_TYPE_PUB[] = "/pub";
+static const char SRVX_MSG_TYPE_SUB[] = "/sub";
 
 srvx_mq_client mqclient;
 
-const char *
-srvx_msg_type(const char *path)
+static int srvx_is_dir_path(const char *path)
 {
-    if (strncmp(SRVX_MSG_TYPE_REQ, path, 4)) {
-        return SRVX_MSG_TYPE_REQ;
-    } else if (strncmp(SRVX_MSG_TYPE_PUB, path, 4)) {
-        return SRVX_MSG_TYPE_PUB;
-    }
-    return NULL;
-}
-
-// Tells us whether a given path matches our route key schema.
-// The root "/" is always valid
-static int
-srvx_is_valid_path(const char *path)
-{
-    if (strcmp("/", path) == 0) {
+    if (strcmp(SRVX_MSG_TYPE_REQ, path) == 0) {
         return 1;
-    } else if (srvx_msg_type(path) != NULL) {
+    } else if (strcmp(SRVX_MSG_TYPE_PUB, path) == 0) {
+        return 1;
+    } else if (strcmp(SRVX_MSG_TYPE_SUB, path) == 0) {
         return 1;
     }
     return 0;
@@ -43,7 +32,7 @@ srvx_getattr(const char *path, struct stat *stbuf)
     printf("getattr called %s\n", path);
     memset(stbuf, 0, sizeof(struct stat));
 
-    if (srvx_is_valid_path(path)) {
+    if (srvx_is_dir_path(path)) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 2;
     } else {
@@ -126,6 +115,23 @@ srvx_chown(const char *path, uid_t uid, gid_t gid)
     return 0;
 }
 
+static int
+srvx_read(const char *path, char *buf, size_t size, off_t offset,
+		struct fuse_file_info *info)
+{
+    size_t len;
+    char *msg = "hello";
+	len = strlen(msg);
+	if (offset < len) {
+		if (offset + size > len)
+			size = len - offset;
+		memcpy(buf, msg + offset, size);
+	} else
+		size = 0;
+
+	return size;
+}
+
 static struct fuse_operations srvx_filesystem_operations = {
     .getattr  = srvx_getattr,
     .access   = srvx_access,
@@ -138,6 +144,7 @@ static struct fuse_operations srvx_filesystem_operations = {
     .utimens  = srvx_utimens,
     .truncate = srvx_truncate,
     .chown    = srvx_chown,
+    .read     = srvx_read,
 };
 
 int
@@ -197,7 +204,7 @@ main(int argc, char **argv)
     // Canned arguments to fuse_main
     char *fuse_args[3];
     fuse_args[0] = "srvx";
-    fuse_args[1] = "-d";
+    fuse_args[1] = "-f";
     fuse_args[2] = strdup(rundir);
 
     // Create the run directory
@@ -206,9 +213,11 @@ main(int argc, char **argv)
     int pid = fork();
 
     if (pid == 0) {
+        // TODO: Is there a better way to know the filesystem is ready than just
+        // waiting a second?
         sleep(1);
         printf("Running command %s\n", full_cmd);
-        FILE *cmd_out = popen(full_cmd, "r");
+        system(full_cmd);
     } else {
         srvx_mq_client_connect(&mqclient);
         fuse_main(3, fuse_args, &srvx_filesystem_operations, NULL);
