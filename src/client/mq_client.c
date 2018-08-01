@@ -6,8 +6,12 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 	void *requester = zmq_socket(context, ZMQ_REQ);
 	zmq_connect(requester, "tcp://127.0.0.1:5555");
 
+	void *subscriber = zmq_socket(context, ZMQ_SUB);
+	zmq_connect(subscriber, "tcp://127.0.0.1:5558");
+
 	client->context = context;
 	client->requester = requester;
+	client->subscriber = subscriber;
 	return 0;
 }
 
@@ -34,5 +38,18 @@ char* srvx_mq_client_send(srvx_mq_client *client, char *msg)
 
 void srvx_mq_client_publish(srvx_mq_client *client, char *key, char *data)
 {
-	
+
+}
+
+// Pull a single message from a subscriber socket
+char* srvx_mq_client_subscribe(srvx_mq_client *client, const char *path)
+{
+	printf("Client is subscribing to %s\n", path);
+	// TODO: Maintain multiple client sockets with different filters?
+	// Not sure how zmq intends this to be handled yet.
+	int rc = zmq_setsockopt(client->subscriber, ZMQ_SUBSCRIBE,
+		path, strlen(path));
+	if (rc != 0)
+		return NULL;
+	return s_recv(client->subscriber);
 }

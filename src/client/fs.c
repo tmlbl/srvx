@@ -7,24 +7,10 @@
 #include <fuse.h>
 
 #include "mq_client.h"
-
-static const char SRVX_MSG_TYPE_REQ[] = "/req";
-static const char SRVX_MSG_TYPE_PUB[] = "/pub";
-static const char SRVX_MSG_TYPE_SUB[] = "/sub";
+#include "path.h"
+#include "zhelpers.h"
 
 srvx_mq_client mqclient;
-
-static int srvx_is_dir_path(const char *path)
-{
-    if (strcmp(SRVX_MSG_TYPE_REQ, path) == 0) {
-        return 1;
-    } else if (strcmp(SRVX_MSG_TYPE_PUB, path) == 0) {
-        return 1;
-    } else if (strcmp(SRVX_MSG_TYPE_SUB, path) == 0) {
-        return 1;
-    }
-    return 0;
-}
 
 static int
 srvx_getattr(const char *path, struct stat *stbuf)
@@ -119,8 +105,18 @@ static int
 srvx_read(const char *path, char *buf, size_t size, off_t offset,
 		struct fuse_file_info *info)
 {
+    char *msg;
+
+    switch (srvx_msg_type(path)) {
+    case SRVX_MSG_TYPE_SUB:
+        msg = srvx_mq_client_subscribe(&mqclient, path);
+        printf("Message received in read: %s\n", msg);
+        break;
+    default:
+        return -1;
+    }
+
     size_t len;
-    char *msg = "hello";
 	len = strlen(msg);
 	if (offset < len) {
 		if (offset + size > len)
