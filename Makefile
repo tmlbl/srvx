@@ -9,26 +9,26 @@ ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -I/usr/local/include/osxfuse
 endif
 
-SRCS := $(wildcard ./src/*.c)
+SRCS := $(wildcard ./src/client/*.c)
 OBJS := $(SRCS:.c=.o)
 
-SRV_SRCS := $(wildcard ./server/*.c)
+SRV_SRCS := $(wildcard ./src/router/*.c)
 SRV_OBJS := $(SRV_SRCS:.c=.o)
 
 .PHONY: all
-all: bin/svx bin/srv
+all: bin/srvx bin/srvx_router
 
 src/%.o: %.c $(SRCS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-bin/svx: $(OBJS)
+bin/srvx: $(OBJS)
 	mkdir -p bin
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 server/%.o: %.c $(SRV_SRCS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-bin/srv: $(SRV_OBJS)
+bin/srvx_router: $(SRV_OBJS)
 	mkdir -p bin
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
