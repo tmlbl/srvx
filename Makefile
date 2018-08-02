@@ -33,5 +33,9 @@ bin/srvx_router: $(SRV_OBJS)
 	mkdir -p bin
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
+.PHONY: install
+install:
+	cp bin/* /usr/local/bin/
+
 clean:
 	rm -f $(OBJS) $(SRV_OBJS) bin/*

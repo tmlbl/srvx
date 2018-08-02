@@ -4,7 +4,9 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 {
 	void *context = zmq_ctx_new();
 	void *requester = zmq_socket(context, ZMQ_REQ);
-	zmq_connect(requester, "tcp://127.0.0.1:5555");
+	int rc = zmq_connect(requester, "tcp://127.0.0.1:5555");
+	if (rc != 0)
+		exit(rc);
 
 	void *publisher = zmq_socket(context, ZMQ_PUSH);
 	zmq_connect(publisher, "tcp://127.0.0.1:5557");
