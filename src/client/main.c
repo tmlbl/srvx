@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <signal.h>
 
 #include "fs.h"
 #include "mq_client.h"
@@ -26,14 +27,23 @@ static char *rand_string(char *str, size_t size)
 	return str;
 }
 
+// Exit immediately on SIGNINT
+// TODO: Unmount the filesystem cleanly, if possible
+void int_handler(int sig)
+{
+	exit(0);
+}
+
 int main(int argc, char **argv)
 {
+	signal(SIGINT, int_handler);
+
 	static struct option long_options[] = {
 		{"verbose", no_argument, &verbose_flag, 1},
 	};
 	int option_index = 0;
 	while (1) {
-		int c = getopt_long(argc, argv, "", 
+		int c = getopt_long(argc, argv, "",
 			long_options, &option_index);
 		if (c == -1)
 			break;
@@ -42,13 +52,13 @@ int main(int argc, char **argv)
 	// Resolve arguments to full paths so we can run in a different
 	// directory context
 	int srvx_flags_end = 0;
-	int args_ix = 0; 
+	int args_ix = 0;
 	char *real_args[argc];
 	for (int i = 1; i < argc; i++) {
 		char *arg = argv[i];
 		if (!srvx_flags_end && arg[0] != '-')
 			srvx_flags_end = 1;
-		else
+		else if (!srvx_flags_end)
 			continue;
 		char actual_path[PATH_MAX + 1];
 		realpath(arg, actual_path);
@@ -72,13 +82,13 @@ int main(int argc, char **argv)
 
 	// Build a command string out of the args to be passed to popen
 	int cmd_len = 0;
-	for (int i = 0; i < argc - 1; i++) {
+	for (int i = 0; i < args_ix; i++) {
 		cmd_len++;
 		cmd_len += strlen(real_args[i]);
 	}
 	char cmd_str[cmd_len+1];
 	cmd_str[0] = 0;
-	for (int i = 0; i < argc - 1; i++) {
+	for (int i = 0; i < args_ix; i++) {
 		if (i > 0) {
 			strcat(cmd_str, " ");
 		}
