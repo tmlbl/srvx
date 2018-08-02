@@ -2,6 +2,8 @@
 
 srvx_mq_client mqclient;
 
+#define SRVX_MAX_MSG_LEN 4095
+
 static int
 srvx_getattr(const char *path, struct stat *stbuf)
 {
@@ -13,7 +15,7 @@ srvx_getattr(const char *path, struct stat *stbuf)
     } else {
         stbuf->st_mode = S_IFREG | 0666;
         stbuf->st_nlink = 1;
-        stbuf->st_size = 20;
+        stbuf->st_size = SRVX_MAX_MSG_LEN;
     }
 
     return 0;
@@ -93,6 +95,9 @@ static int
 srvx_read(const char *path, char *buf, size_t size, off_t offset,
 		struct fuse_file_info *info)
 {
+    printf("Offset is %lu\n", offset);
+    if (offset > 0)
+        return 0;
     char *msg;
 
     switch (srvx_msg_type(path)) {
@@ -104,16 +109,10 @@ srvx_read(const char *path, char *buf, size_t size, off_t offset,
     }
 
     msg = srvx_chop_path(msg);
-    size_t len;
-	len = strlen(msg);
-	if (offset < len) {
-		if (offset + size > len)
-			size = len - offset;
-		memcpy(buf, msg + offset, size);
-	} else
-		size = 0;
+    size_t len = strlen(msg);
+	memcpy(buf, msg, len);
 
-	return size;
+	return len;
 }
 
 static struct fuse_operations srvx_filesystem_operations = {
