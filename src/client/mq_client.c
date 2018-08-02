@@ -18,6 +18,8 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 	client->requester = requester;
 	client->publisher = publisher;
 	client->subscriber = subscriber;
+
+	client->subscriptions = zhash_new();
 	return 0;
 }
 
@@ -25,6 +27,7 @@ int srvx_mq_client_destroy(srvx_mq_client *client)
 {
 	zmq_close(client->requester);
 	zmq_ctx_destroy(client->context);
+	// TODO: Destroy subscriptions
 	return 0;
 }
 
@@ -50,15 +53,48 @@ void srvx_mq_client_publish(srvx_mq_client *client, char *path, char *data)
 	s_send(client->publisher, payload);
 }
 
-// Pull a single message from a subscriber socket
-char* srvx_mq_client_subscribe(srvx_mq_client *client, const char *path)
+srvx_subscription* srvx_mq_client_sub(srvx_mq_client *client, const char *path)
 {
-	printf("Client is subscribing to %s\n", path);
-	// TODO: Maintain multiple client sockets with different filters?
-	// Not sure how zmq intends this to be handled yet.
-	int rc = zmq_setsockopt(client->subscriber, ZMQ_SUBSCRIBE,
-		path, strlen(path));
-	if (rc != 0)
-		return NULL;
-	return s_recv(client->subscriber);
+	void *look = zhash_lookup(client->subscriptions, path);
+	if (look == NULL) {
+		// Create if missing
+		srvx_subscription *sub =
+			(srvx_subscription*)malloc(sizeof(srvx_subscription));
+		memset(sub, 0, sizeof(srvx_subscription));
+		sub->sock = zmq_socket(client->context, ZMQ_SUB);
+		zmq_connect(sub->sock, "tcp://127.0.0.1:5558");
+		zmq_setsockopt(sub->sock, ZMQ_SUBSCRIBE, path, strlen(path));
+		zhash_update(client->subscriptions, path, sub);
+		return sub;
+	} else {
+		return (srvx_subscription*)look;
+	}
+}
+
+void sub_get_next(srvx_subscription *sub)
+{
+	sub->next_msg = strdup(s_recv(sub->sock));
+	sub->msg_len = strlen(srvx_chop_path(sub->next_msg));
+	sub->read_offset = 0;
+}
+
+char* srvx_mq_client_sub_read(srvx_mq_client *client, const char *path,
+	size_t size, size_t offset)
+{
+	srvx_subscription *sub = srvx_mq_client_sub(client, path);
+	if (sub->next_msg == NULL) {
+		sub_get_next(sub);
+	}
+	size_t to_read = sub->msg_len - offset;
+	char buf[to_read];
+	strcpy(buf, sub->next_msg);
+	if (to_read < size)
+		sub->next_msg = NULL;
+	return strdup(buf);
+}
+
+size_t srvx_mq_client_sub_peek_len(srvx_mq_client *client, const char *path)
+{
+	srvx_subscription *sub = srvx_mq_client_sub(client, path);
+	return sub->msg_len;
 }

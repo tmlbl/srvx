@@ -20,7 +20,6 @@ int main(void)
 		char *msg = s_recv(subscriber);
 		printf("Forwarding message %s\n", msg);
 		s_send(publisher, msg);
-		sleep(2);
 	}
 
 	return 0;

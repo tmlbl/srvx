@@ -15,7 +15,12 @@ srvx_getattr(const char *path, struct stat *stbuf)
     } else {
         stbuf->st_mode = S_IFREG | 0666;
         stbuf->st_nlink = 1;
-        stbuf->st_size = SRVX_MAX_MSG_LEN;
+        stbuf->st_size = 0;
+
+        switch (srvx_msg_type(path)) {
+        case SRVX_MSG_TYPE_PUB:
+            stbuf->st_size = srvx_mq_client_sub_peek_len(&mqclient, path);
+        }
     }
 
     return 0;
@@ -95,14 +100,13 @@ static int
 srvx_read(const char *path, char *buf, size_t size, off_t offset,
 		struct fuse_file_info *info)
 {
-    printf("Offset is %lu\n", offset);
     if (offset > 0)
         return 0;
     char *msg;
 
     switch (srvx_msg_type(path)) {
     case SRVX_MSG_TYPE_PUB:
-        msg = srvx_mq_client_subscribe(&mqclient, path);
+        msg = srvx_mq_client_sub_read(&mqclient, path, size, offset);
         break;
     default:
         return -1;
