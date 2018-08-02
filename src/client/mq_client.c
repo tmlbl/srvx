@@ -74,6 +74,15 @@ void sub_get_next(srvx_subscription *sub)
 	sub->read_offset = 0;
 }
 
+void sub_clear_msg(srvx_subscription *sub)
+{
+	free(sub->next_msg);
+	sub->next_msg = NULL;
+	sub->read_offset = 0;
+	// We don't clear the len because it may be used by stat after the
+	// message is actually read. TBD whether this causes problems.
+}
+
 char* srvx_mq_client_sub_read(srvx_mq_client *client, const char *path,
 	size_t size, size_t offset)
 {
@@ -85,7 +94,7 @@ char* srvx_mq_client_sub_read(srvx_mq_client *client, const char *path,
 	char buf[to_read];
 	strcpy(buf, sub->next_msg);
 	if (to_read < size)
-		sub->next_msg = NULL;
+		sub_clear_msg(sub);
 	return strdup(buf);
 }
 
