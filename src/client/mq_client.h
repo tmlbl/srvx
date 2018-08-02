@@ -12,7 +12,6 @@ typedef struct srvx_mq_client {
 	void *context;
 	void *requester;
 	void *publisher;
-	void *subscriber;
 	zhash_t *subscriptions;
 } srvx_mq_client;
 

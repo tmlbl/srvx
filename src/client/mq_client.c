@@ -11,13 +11,9 @@ int srvx_mq_client_connect(srvx_mq_client *client)
 	void *publisher = zmq_socket(context, ZMQ_PUSH);
 	zmq_connect(publisher, "tcp://127.0.0.1:5557");
 
-	void *subscriber = zmq_socket(context, ZMQ_SUB);
-	zmq_connect(subscriber, "tcp://127.0.0.1:5558");
-
 	client->context = context;
 	client->requester = requester;
 	client->publisher = publisher;
-	client->subscriber = subscriber;
 
 	client->subscriptions = zhash_new();
 	return 0;
