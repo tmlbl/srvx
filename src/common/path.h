@@ -29,7 +29,7 @@ static int srvx_msg_type(const char *path)
 }
 
 // Remove the path segment from a message string
-char* srvx_chop_path(char *msg)
+static char* srvx_chop_path(char *msg)
 {
 	int msg_len = strlen(msg);
 	for (int i = 0; i < msg_len; i++) {

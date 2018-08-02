@@ -1,8 +1,9 @@
 CC := clang
 MESON_VERSION := 0.47.1
 UNAME_S := $(shell uname -s)
+PWD := $(shell pwd)
 
-CFLAGS := -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I `pwd`/src/common
+CFLAGS := -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I$(PWD)/src/common
 LDFLAGS := -pthread -lfuse -lczmq -lzmq
 
 ifeq ($(UNAME_S),Darwin)
@@ -33,5 +34,4 @@ bin/srvx_router: $(SRV_OBJS)
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 clean:
-	rm -f $(OBJS) bin/*
-
+	rm -f $(OBJS) $(SRV_OBJS) bin/*
