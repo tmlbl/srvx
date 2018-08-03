@@ -43,7 +43,6 @@ char* srvx_mq_client_send(srvx_mq_client *client, char *msg)
 
 void srvx_mq_client_publish(srvx_mq_client *client, char *path, char *data)
 {
-	printf("Client is publishing at %s\n", path);
 	char payload[strlen(path) + strlen(data) + 1];
 	sprintf(payload, "%s %s", path, data);
 	s_send(client->publisher, payload);
@@ -87,14 +86,17 @@ char* srvx_mq_client_sub_read(srvx_mq_client *client, const char *path,
 	size_t size, size_t offset)
 {
 	srvx_subscription *sub = srvx_mq_client_sub(client, path);
-	if (sub->next_msg == NULL) {
+
+	if (sub->next_msg == NULL)
 		sub_get_next(sub);
-	}
+
 	size_t to_read = sub->msg_len - offset;
 	char buf[to_read];
 	strcpy(buf, sub->next_msg);
-	if (to_read < size)
-		sub_clear_msg(sub);
+
+	sub_clear_msg(sub);
+	sub_get_next(sub);
+
 	return strdup(buf);
 }
 

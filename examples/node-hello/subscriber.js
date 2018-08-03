@@ -1,7 +1,7 @@
 const fs = require('fs')
 
 while (true) {
-    console.log('Waiting for a message...')
-    const msg = fs.readFileSync('pub/foo:bar')
-    console.log(`Received message: ${msg}`)
+  const msg = JSON.parse(fs.readFileSync('pub/random'))
+  const product = msg.a * msg.b
+  fs.writeFileSync('pub/product', JSON.stringify({ product }))
 }

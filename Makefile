@@ -1,4 +1,4 @@
-CC := clang
+CC := gcc
 MESON_VERSION := 0.47.1
 UNAME_S := $(shell uname -s)
 PWD := $(shell pwd)
