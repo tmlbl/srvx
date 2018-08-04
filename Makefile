@@ -37,5 +37,10 @@ bin/srvx_router: $(SRV_OBJS)
 install:
 	cp bin/* /usr/local/bin/
 
+.PHONY: images
+images:
+	docker build -t srvx/router -f src/router/Dockerfile .
+	docker build -t srvx/srvx -f src/client/Dockerfile .
+
 clean:
 	rm -f $(OBJS) $(SRV_OBJS) bin/*
