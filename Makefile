@@ -3,7 +3,7 @@ MESON_VERSION := 0.47.1
 UNAME_S := $(shell uname -s)
 PWD := $(shell pwd)
 
-CFLAGS := -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I$(PWD)/src/common
+CFLAGS += -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I$(PWD)/src/common
 LDFLAGS := -pthread -lczmq -lzmq
 
 ifeq ($(UNAME_S),Darwin)
