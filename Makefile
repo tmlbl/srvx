@@ -4,7 +4,7 @@ UNAME_S := $(shell uname -s)
 PWD := $(shell pwd)
 
 CFLAGS += -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I$(PWD)/src/common
-LDFLAGS := -pthread -lczmq -lzmq
+LDFLAGS += -lczmq -lzmq -lstdc++ -pthread -static -lm -luuid -lfuse -ldl
 
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -I/usr/local/include/osxfuse
@@ -24,7 +24,7 @@ src/%.o: %.c $(SRCS)
 
 bin/srvx: $(OBJS)
 	mkdir -p bin
-	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS) -lfuse
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
 server/%.o: %.c $(SRV_SRCS)
 	$(CC) -c -o $@ $< $(CFLAGS)
