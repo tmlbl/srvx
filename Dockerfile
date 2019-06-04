@@ -12,10 +12,12 @@ RUN git clone git://github.com/zeromq/libzmq.git && \
 	cd libzmq && \
 	git checkout $LIBZMQ_SHA && \
 	./autogen.sh && \
-	./configure --enable-static --disable-shared --with-libsodium && \
+	./configure --enable-static --disable-shared && \
 	make -j $(nproc) && make install && ldconfig
 
 ENV CZMQ_SHA 6d9c89705a2af1aae6f6d93789ec865cea629829
+ENV LDFLAGS '/usr/local/lib/libzmq.a'
+ENV CPPFLAGS '-I/usr/local/include -fPIC'
 
 RUN git clone git://github.com/zeromq/czmq.git && \
 	cd czmq && \
