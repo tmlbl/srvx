@@ -1,3 +1,4 @@
 meson-*
 *.o
 bin/
+.vscode/

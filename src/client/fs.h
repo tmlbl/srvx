@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 32
 #include <fuse.h>
 
 #include "mq_client.h"

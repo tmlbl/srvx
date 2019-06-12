@@ -18,26 +18,47 @@ peek_msg_size(srvx_mq_client *client, const char *path)
 	return 0;
 }
 
-static int
-srvx_getattr(const char *path, struct stat *stbuf)
-{
-	memset(stbuf, 0, sizeof(struct stat));
+// static int
+// srvx_getattr(const char *path, struct stat *stbuf)
+// {
+// 	memset(stbuf, 0, sizeof(struct stat));
 
-	if (srvx_is_dir_path(path)) {
+// 	if (srvx_is_dir_path(path)) {
+// 		stbuf->st_mode = S_IFDIR | 0755;
+// 		stbuf->st_nlink = 2;
+// 	} else {
+// 		stbuf->st_mode = S_IFREG | 0666;
+// 		stbuf->st_nlink = 1;
+// 		stbuf->st_size = peek_msg_size(&mqclient, path);
+
+// 		// If the next message is 0, we tell the client the file is
+// 		// really big so they keep trying to read it
+// 		if (stbuf->st_size == 0)
+// 			stbuf->st_size = 4096;
+// 	}
+
+// 	return 0;
+// }
+
+static int
+srvx_getattr(const char *path, struct stat *stbuf,
+			 struct fuse_file_info *fi)
+{
+	(void) fi;
+	int res = 0;
+
+	memset(stbuf, 0, sizeof(struct stat));
+	if (strcmp(path, "/") == 0) {
 		stbuf->st_mode = S_IFDIR | 0755;
 		stbuf->st_nlink = 2;
-	} else {
-		stbuf->st_mode = S_IFREG | 0666;
+	} else if (strcmp(path+1, "dingdong") == 0) {
+		stbuf->st_mode = S_IFREG | 0444;
 		stbuf->st_nlink = 1;
-		stbuf->st_size = peek_msg_size(&mqclient, path);
+		stbuf->st_size = strlen("hello");
+	} else
+		res = -ENOENT;
 
-		// If the next message is 0, we tell the client the file is
-		// really big so they keep trying to read it
-		if (stbuf->st_size == 0)
-			stbuf->st_size = 4096;
-	}
-
-	return 0;
+	return res;
 }
 
 static int
@@ -46,12 +67,31 @@ srvx_access(const char *path, int perm)
 	return 0;
 }
 
+// static int
+// srvx_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+// 	off_t offset, struct fuse_file_info *fi)
+// {
+// 	filler(buf, ".", NULL, 0, 0);
+// 	filler(buf, "..", NULL, 0, 0);
+
+// 	return 0;
+// }
+
 static int
 srvx_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-	off_t offset, struct fuse_file_info *fi)
+	off_t offset, struct fuse_file_info *fi,
+	enum fuse_readdir_flags flags)
 {
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
+	(void) offset;
+	(void) fi;
+	(void) flags;
+
+	if (strcmp(path, "/") != 0)
+		return -ENOENT;
+
+	filler(buf, ".", NULL, 0, 0);
+	filler(buf, "..", NULL, 0, 0);
+	filler(buf, "dingdong", NULL, 0, 0);
 
 	return 0;
 }

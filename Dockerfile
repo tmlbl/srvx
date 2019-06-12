@@ -16,22 +16,23 @@ RUN git clone git://github.com/zeromq/libzmq.git && \
 	cd libzmq && \
 	git checkout $LIBZMQ_SHA && \
 	./autogen.sh && \
-	./configure --enable-static --disable-shared && \
+	./configure --prefix=/opt/srvx-deps && \
 	make -j $(nproc) && make install && ldconfig
 
 ENV CZMQ_SHA 6d9c89705a2af1aae6f6d93789ec865cea629829
-ENV LDFLAGS '/usr/local/lib/libzmq.a'
-ENV CPPFLAGS '-I/usr/local/include -fPIC'
+ENV CPPFLAGS -I/opt/srvx-deps/include
+ENV LDFLAGS -L/opt/srvx-deps/lib
 
 RUN git clone git://github.com/zeromq/czmq.git && \
 	cd czmq && \
 	git checkout $CZMQ_SHA && \
 	./autogen.sh && \
-	./configure --enable-static --disable-shared && \
+	./configure --prefix=/opt/srvx-deps && \
 	make -j $(nproc) && \
 	make install && ldconfig
 
 RUN git clone https://github.com/libfuse/libfuse.git && \
 	mkdir libfuse/build && \
 	cd libfuse/build && \
-	meson .. && ninja
+	meson .. && ninja && \
+	mv lib/* /opt/srvx-deps/lib/
