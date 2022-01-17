@@ -11,8 +11,6 @@
 #include "path.h"
 #include "zhelpers.h"
 
-static int verbose_flag;
-
 static char *rand_string(char *str, size_t size)
 {
 	const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST";
@@ -119,11 +117,13 @@ int main(int argc, char **argv)
 	if (pid == 0) {
 		// TODO: Is there a better way to know the filesystem is ready
 		// than just waiting a second?
-		sleep(1);
-		if (verbose_flag)
-			printf("Running command %s\n", full_cmd);
-		system(full_cmd);
+		// sleep(1);
+		// if (verbose_flag)
+		// 	printf("Running command %s\n", full_cmd);
+		// system(full_cmd);
+		printf("Doing nothing\n");
 	} else {
+		printf("Calling main for filesystem at %s\n", rundir);
 		srvx_fs_main(3, fuse_args);
 	}
 }

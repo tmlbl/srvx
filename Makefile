@@ -4,7 +4,7 @@ UNAME_S := $(shell uname -s)
 PWD := $(shell pwd)
 
 CFLAGS += -Wall -Wno-unused-function -D_FILE_OFFSET_BITS=64 -I$(PWD)/src/common -I/opt/libfuse/include
-LDFLAGS += -L/opt/libfuse/build/lib -lczmq -lzmq -lstdc++ -pthread -lm -luuid -ldl -lfuse3
+LDFLAGS += -L/opt/libfuse/build/lib -lczmq -lzmq -lstdc++ -pthread -lm -luuid -ldl -lfuse
 
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS += -I/usr/local/include/osxfuse
