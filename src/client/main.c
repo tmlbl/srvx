@@ -6,7 +6,7 @@
 #include <getopt.h>
 #include <signal.h>
 
-#include "fs.h"
+#include "ops.h"
 #include "mq_client.h"
 #include "path.h"
 #include "zhelpers.h"
